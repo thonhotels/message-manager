@@ -4,26 +4,24 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
-using Newtonsoft.Json;
 
 namespace MessageManager
 {
-    public class ReceiverArguments
+    public class KillerArguments
     {
         public string NamespaceName { get; set; }
         public string KeyName { get; set; }
         public string Key { get; set; }
         public string TopicName { get; set; }
         public string Name { get; set; }
-        public bool Dead { get; set; }
-        public bool Details { get; set; }
-    }
-    
-    public class Receiver
-    {
-        private MessageReceiver Client { get; }
+        public string Id { get; set; }
+    }   
 
-        public Receiver(KeyFetcher keyFetcher, ReceiverArguments a)
+    public class Killer
+    {
+        private MessageReceiver Receiver { get; }
+
+        public Killer(KeyFetcher keyFetcher, KillerArguments a)
         {
             var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicName).Replace("\"", "") : a.Key;
             if (string.IsNullOrEmpty(k))
@@ -33,22 +31,30 @@ namespace MessageManager
             }
             var connectionString = $"Endpoint=sb://{a.NamespaceName}.servicebus.windows.net/;SharedAccessKeyName={a.KeyName};SharedAccessKey={k}";
 
-            Client = new MessageReceiver(connectionString, EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")));   
+            var subscriptionPath = EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name);
+
+            Receiver = new MessageReceiver(connectionString, subscriptionPath); 
         }
 
-        public async Task Peek(bool detailed)
+        public async Task Execute(string id)
         {
             Message message;
             do
             {
-                message = await Client.PeekAsync();
+                message = await Receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
 
-                if (message != null)                
-                {
-                    if (detailed)
-                        Console.WriteLine($"Peeked: {JsonConvert.SerializeObject(message, Formatting.Indented)}");
-                    Console.WriteLine($"MessageId: {message.MessageId}\nBody: {Encoding.UTF8.GetString(message.Body)}");
+                if (message == null)                
+                {                    
+                    Console.WriteLine($"Message with id {id} was not found");
+                    return;
                 }
+
+                if (message.MessageId == id)
+                {
+                    await Receiver.DeadLetterAsync(message.SystemProperties.LockToken);
+                    return;
+                }
+                await Receiver.AbandonAsync(message.SystemProperties.LockToken);
             } while (message != null);
         }
     }

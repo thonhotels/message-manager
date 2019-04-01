@@ -8,22 +8,20 @@ using Newtonsoft.Json;
 
 namespace MessageManager
 {
-    public class ReceiverArguments
+    public class ResenderArguments
     {
         public string NamespaceName { get; set; }
         public string KeyName { get; set; }
         public string Key { get; set; }
         public string TopicName { get; set; }
         public string Name { get; set; }
-        public bool Dead { get; set; }
-        public bool Details { get; set; }
     }
-    
-    public class Receiver
+    public class Resender
     {
-        private MessageReceiver Client { get; }
+        private MessageReceiver Receiver { get; }
+        private TopicClient Sender { get; }
 
-        public Receiver(KeyFetcher keyFetcher, ReceiverArguments a)
+        public Resender(KeyFetcher keyFetcher, ResenderArguments a)
         {
             var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicName).Replace("\"", "") : a.Key;
             if (string.IsNullOrEmpty(k))
@@ -33,23 +31,35 @@ namespace MessageManager
             }
             var connectionString = $"Endpoint=sb://{a.NamespaceName}.servicebus.windows.net/;SharedAccessKeyName={a.KeyName};SharedAccessKey={k}";
 
-            Client = new MessageReceiver(connectionString, EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")));   
-        }
+            var subscriptionPath = EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name);
 
-        public async Task Peek(bool detailed)
+            Receiver = new MessageReceiver(connectionString, EntityNameHelper.FormatDeadLetterPath(subscriptionPath));  
+            Sender = new TopicClient(connectionString, a.TopicName); 
+        }    
+
+        public async Task Execute()
         {
             Message message;
+            int count = 0;
             do
             {
-                message = await Client.PeekAsync();
+                message = await Receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
 
                 if (message != null)                
-                {
-                    if (detailed)
-                        Console.WriteLine($"Peeked: {JsonConvert.SerializeObject(message, Formatting.Indented)}");
-                    Console.WriteLine($"MessageId: {message.MessageId}\nBody: {Encoding.UTF8.GetString(message.Body)}");
-                }
+                {                    
+                    await Sender.SendAsync(Copy(message));
+                    await Receiver.CompleteAsync(message.SystemProperties.LockToken);
+                    count++;
+                }                
             } while (message != null);
+            Console.WriteLine($"Resent {count} messages to queue/subscription");
         }
+
+        public Message Copy(Message m) =>
+            new Message(m.Body)
+            {
+                Label = m.Label,
+                MessageId = m.MessageId
+            };
     }
 }

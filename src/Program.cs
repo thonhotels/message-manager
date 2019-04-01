@@ -70,20 +70,48 @@ namespace MessageManager
                 new Argument<bool>(defaultValue:false)
             );
 
+            var idOpt = new Option(
+                "--id",
+                "message id",
+                new Argument<string>()
+            );
+
             var list = new Command("list")
             {
                 resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,detailsOpt
             };
+
+            var resend = new Command("resend")
+            {
+                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt
+            };
+
+            var kill = new Command("kill")
+            {
+                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,idOpt
+            };
+
             var command = new RootCommand()
             {
-                list
+                list, resend, kill
             };
 
             list.Handler = CommandHandler.Create<string, bool, ReceiverArguments>((resourceGroup, primaryKey, a) =>
             {
                 new Receiver(new KeyFetcher(resourceGroup, primaryKey), a)
                     .Peek(a.Details).GetAwaiter().GetResult();
+            });
 
+            resend.Handler = CommandHandler.Create<string, bool, ResenderArguments>((resourceGroup, primaryKey, a) =>
+            {           
+                new Resender(new KeyFetcher(resourceGroup, primaryKey), a)
+                    .Execute().GetAwaiter().GetResult();
+            });
+
+            kill.Handler = CommandHandler.Create<string, bool, KillerArguments>((resourceGroup, primaryKey, a) =>
+            {               
+                new Killer(new KeyFetcher(resourceGroup, primaryKey), a)
+                    .Execute(a.Id).GetAwaiter().GetResult();
             });
 
             var configuration = CreateConfiguration();
@@ -137,5 +165,12 @@ namespace MessageManager
 
             return true;
         }
+
+// copy this into a handler to break when starting from command line
+                // if (!System.Diagnostics.Debugger.IsAttached) 
+                //     Console.WriteLine($"Please attach a debugger, PID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
+                // while (!System.Diagnostics.Debugger.IsAttached) 
+                //     System.Threading.Thread.Sleep(100);
+                // System.Diagnostics.Debugger.Break();         
     }
 }
