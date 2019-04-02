@@ -15,8 +15,7 @@ namespace MessageManager
         private static IConfiguration CreateConfiguration()
         {
             var builder = new ConfigurationBuilder()
-                                        .SetBasePath(Directory.GetCurrentDirectory())
-                                        .AddJsonFile("appsettings.json");
+                                        .SetBasePath(Directory.GetCurrentDirectory());
 
             builder = builder.AddEnvironmentVariables();
             return builder.Build();
@@ -132,6 +131,8 @@ namespace MessageManager
                 list, resend, kill, delete, send
             };
 
+            var configuration = CreateConfiguration();
+
             list.Handler = CommandHandler.Create<string, bool, ListerArguments>((resourceGroup, primaryKey, a) =>
             {
                 // if (!System.Diagnostics.Debugger.IsAttached) 
@@ -139,35 +140,33 @@ namespace MessageManager
                 // while (!System.Diagnostics.Debugger.IsAttached) 
                 //     System.Threading.Thread.Sleep(100);
                 // System.Diagnostics.Debugger.Break();                 
-                new Lister(new KeyFetcher(resourceGroup, primaryKey), a)
+                new Lister(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
                     .Execute(a.Details).GetAwaiter().GetResult();
             });
 
             resend.Handler = CommandHandler.Create<string, bool, ResenderArguments>((resourceGroup, primaryKey, a) =>
             {           
-                new Resender(new KeyFetcher(resourceGroup, primaryKey), a)
+                new Resender(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
                     .Execute().GetAwaiter().GetResult();
             });
 
             kill.Handler = CommandHandler.Create<string, bool, KillerArguments>((resourceGroup, primaryKey, a) =>
             {               
-                new Killer(new KeyFetcher(resourceGroup, primaryKey), a)
+                new Killer(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
 
             delete.Handler = CommandHandler.Create<string, bool, DeleterArguments>((resourceGroup, primaryKey, a) =>
             {               
-                new Deleter(new KeyFetcher(resourceGroup, primaryKey), a)
+                new Deleter(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
 
             send.Handler = CommandHandler.Create<string, bool, SenderArguments>((resourceGroup, primaryKey, a) =>
             {               
-                new Sender(new KeyFetcher(resourceGroup, primaryKey), a)
+                new Sender(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
                     .Execute(a.Path, a.Id, a.Label).GetAwaiter().GetResult();
             });
-
-            var configuration = CreateConfiguration();  
 
             return command.InvokeAsync(AddRequiredListOptions(args)).Result;
         }

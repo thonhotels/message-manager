@@ -8,9 +8,14 @@ namespace MessageManager
     {
         private string ResourceGroupName { get; }
         private string PrimaryOrSecondary { get; }
+        private string PythonPath { get; }
+
         private Dictionary<string, string> Cache { get; }
 
-        public KeyFetcher(string resourceGroupName, bool primaryKey)
+        private bool IsWindows() => System.Runtime.InteropServices.RuntimeInformation
+                                               .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+
+        public KeyFetcher(string resourceGroupName, bool primaryKey, string pythonPath)
         {
             ResourceGroupName = resourceGroupName;
             PrimaryOrSecondary = primaryKey ? "primaryKey" : "secondaryKey";
@@ -26,8 +31,8 @@ namespace MessageManager
             if (Cache.ContainsKey(key))
                 return Cache[key];
             var process = new Process();
-            process.StartInfo.FileName = "az";
-            process.StartInfo.Arguments = BuildArguments(namespaceName, keyName, topicName, type);
+            process.StartInfo.FileName = IsWindows() ? GetWindowsPath() : "az";
+            process.StartInfo.Arguments = IsWindows() ? "-IBm azure.cli " : "" + BuildArguments(namespaceName, keyName, topicName, type);
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.RedirectStandardOutput = true;
@@ -46,5 +51,8 @@ namespace MessageManager
             type == BusType.Queue ?
                 $"servicebus topic authorization-rule keys list -g {ResourceGroupName} --namespace-name {namespaceName} --name {keyName} --topic-name {name} --query {PrimaryOrSecondary}" :
                 $"servicebus queue authorization-rule keys list -g {ResourceGroupName} --namespace-name {namespaceName} --name {keyName} --queue-name {name} --query {PrimaryOrSecondary}";
+
+        private string GetWindowsPath() => 
+            string.IsNullOrEmpty(PythonPath) ? @"C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\python.exe" : PythonPath;
     }
 }
