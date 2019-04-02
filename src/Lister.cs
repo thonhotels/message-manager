@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace MessageManager
 {
-    public class ReceiverArguments
+    public class ListerArguments
     {
         public string NamespaceName { get; set; }
         public string KeyName { get; set; }
@@ -19,11 +19,11 @@ namespace MessageManager
         public bool Details { get; set; }
     }
     
-    public class Receiver
+    public class Lister
     {
         private MessageReceiver Client { get; }
 
-        public Receiver(KeyFetcher keyFetcher, ReceiverArguments a)
+        public Lister(KeyFetcher keyFetcher, ListerArguments a)
         {
             var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicName).Replace("\"", "") : a.Key;
             if (string.IsNullOrEmpty(k))
@@ -36,7 +36,7 @@ namespace MessageManager
             Client = new MessageReceiver(connectionString, EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")));   
         }
 
-        public async Task Peek(bool detailed)
+        public async Task Execute(bool detailed)
         {
             Message message;
             do

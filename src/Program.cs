@@ -101,10 +101,10 @@ namespace MessageManager
                 list, resend, kill, delete
             };
 
-            list.Handler = CommandHandler.Create<string, bool, ReceiverArguments>((resourceGroup, primaryKey, a) =>
+            list.Handler = CommandHandler.Create<string, bool, ListerArguments>((resourceGroup, primaryKey, a) =>
             {
-                new Receiver(new KeyFetcher(resourceGroup, primaryKey), a)
-                    .Peek(a.Details).GetAwaiter().GetResult();
+                new Lister(new KeyFetcher(resourceGroup, primaryKey), a)
+                    .Execute(a.Details).GetAwaiter().GetResult();
             });
 
             resend.Handler = CommandHandler.Create<string, bool, ResenderArguments>((resourceGroup, primaryKey, a) =>
@@ -147,7 +147,7 @@ namespace MessageManager
             return result.ToArray();
         }
 
-        private static bool CheckRequiredOptions(string resourceGroup, ReceiverArguments a)
+        private static bool CheckRequiredOptions(string resourceGroup, ListerArguments a)
         {
             if (string.IsNullOrEmpty(resourceGroup) )
             {
