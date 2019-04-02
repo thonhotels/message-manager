@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace MessageManager
 {
+    public enum BusType { Queue, Topic } 
+
     class Program
     {
         private static IConfiguration CreateConfiguration()
@@ -28,6 +30,13 @@ namespace MessageManager
                 new Argument<string>() { Arity = ArgumentArity.ExactlyOne }
             );   
             resourceGroupOpt.AddAlias("-g");
+
+            var typeOpt = new Option(
+                "--type",
+                "Queue or Topic.",
+                new Argument<BusType>() { Arity = ArgumentArity.ExactlyOne }
+            );   
+            typeOpt.AddAlias("-t");
 
             var primaryOpt = new Option(
                 "--primaryKey",
@@ -78,22 +87,22 @@ namespace MessageManager
 
             var list = new Command("list")
             {
-                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,detailsOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,detailsOpt
             };
 
             var resend = new Command("resend")
             {
-                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt
             };
 
             var kill = new Command("kill")
             {
-                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,idOpt
             };
 
             var delete = new Command("delete")
             {
-                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,idOpt
             };
 
             var command = new RootCommand()
@@ -136,6 +145,8 @@ namespace MessageManager
             var result = new List<string>(args);
             if (!result.Contains("--resource-group") && !result.Contains("-g"))
                 result.Add("--resource-group");
+            if (!result.Contains("--type") && !result.Contains("-t"))
+                result.Add("--type Queue");
             if (!result.Contains("--namespace-name"))
                 result.Add("--namespace-name");
             if (!result.Contains("--keyName"))
@@ -164,7 +175,7 @@ namespace MessageManager
                 Console.WriteLine("Key name is required");
                 return false;
             }
-            if (string.IsNullOrEmpty(a.TopicName) )
+            if (string.IsNullOrEmpty(a.TopicQueueName) )
             {
                 Console.WriteLine("Topic name is required");
                 return false;

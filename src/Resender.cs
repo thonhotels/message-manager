@@ -8,33 +8,23 @@ using Newtonsoft.Json;
 
 namespace MessageManager
 {
-    public class ResenderArguments
+    public class ResenderArguments : CommandArguments
     {
-        public string NamespaceName { get; set; }
-        public string KeyName { get; set; }
-        public string Key { get; set; }
-        public string TopicName { get; set; }
-        public string Name { get; set; }
     }
-    public class Resender
+
+    public class Resender : SbsCommand
     {
-        private MessageReceiver Receiver { get; }
-        private TopicClient Sender { get; }
+        private ISenderClient Sender { get; }
 
-        public Resender(KeyFetcher keyFetcher, ResenderArguments a)
+        public Resender(KeyFetcher keyFetcher, ResenderArguments a) : 
+            base(keyFetcher, a, EntityNameHelper.FormatDeadLetterPath(EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name)))
         {
-            var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicName).Replace("\"", "") : a.Key;
-            if (string.IsNullOrEmpty(k))
-            {
-                Console.WriteLine($"Failed to get key from azure. \nCheck if this command works:\n az servicebus topic authorization-rule keys list -g <rg name> --namespace-name <ns> --name {a.KeyName} --topic-name {a.TopicName} --query primaryKey ");
-                throw new Exception("Failed to get key from azure");
-            }
+            var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicQueueName, a.Type).Replace("\"", "") : a.Key;
             var connectionString = $"Endpoint=sb://{a.NamespaceName}.servicebus.windows.net/;SharedAccessKeyName={a.KeyName};SharedAccessKey={k}";
-
-            var subscriptionPath = EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name);
-
-            Receiver = new MessageReceiver(connectionString, EntityNameHelper.FormatDeadLetterPath(subscriptionPath));  
-            Sender = new TopicClient(connectionString, a.TopicName); 
+            
+            Sender = a.Type == BusType.Queue ?
+                (ISenderClient)new QueueClient(connectionString, a.TopicQueueName) :
+                new TopicClient(connectionString, a.TopicQueueName); 
         }    
 
         public async Task Execute()

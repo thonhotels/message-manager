@@ -5,32 +5,17 @@ using Microsoft.Azure.ServiceBus.Core;
 
 namespace MessageManager
 {
-    public class DeleterArguments
+    public class DeleterArguments : CommandArguments
     {
-        public string NamespaceName { get; set; }
-        public string KeyName { get; set; }
-        public string Key { get; set; }
-        public string TopicName { get; set; }
-        public string Name { get; set; }
         public bool Dead { get; set; }
         public string Id { get; set; }
     } 
 
-    public class Deleter
+    public class Deleter : SbsCommand
     {
-        private MessageReceiver Receiver { get; }
-
-        public Deleter(KeyFetcher keyFetcher, DeleterArguments a)
+        public Deleter(KeyFetcher keyFetcher, DeleterArguments a) : 
+            base(keyFetcher, a, EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")))
         {
-            var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicName).Replace("\"", "") : a.Key;
-            if (string.IsNullOrEmpty(k))
-            {
-                Console.WriteLine($"Failed to get key from azure. \nCheck if this command works:\n az servicebus topic authorization-rule keys list -g <rg name> --namespace-name <ns> --name {a.KeyName} --topic-name {a.TopicName} --query primaryKey ");
-                throw new Exception("Failed to get key from azure");
-            }
-            var connectionString = $"Endpoint=sb://{a.NamespaceName}.servicebus.windows.net/;SharedAccessKeyName={a.KeyName};SharedAccessKey={k}";
-
-            Receiver = new MessageReceiver(connectionString, EntityNameHelper.FormatSubscriptionPath(a.TopicName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")));   
         }      
 
         public async Task Execute(string id)
