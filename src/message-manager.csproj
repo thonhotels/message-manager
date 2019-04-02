@@ -10,6 +10,11 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>sbmgr</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageTags>azure;service-bus</PackageTags>    
+    <PackageProjectUrl>https://github.com/thonhotels/message-manager</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/thonhotels/message-manager/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/thonhotels/message-manager</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
