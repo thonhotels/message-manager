@@ -14,7 +14,7 @@ namespace MessageManager
     public class Deleter : SbsCommand
     {
         public Deleter(KeyFetcher keyFetcher, DeleterArguments a) : 
-            base(keyFetcher, a, EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")))
+            base(keyFetcher, a, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
         {
         }      
 

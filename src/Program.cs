@@ -63,6 +63,11 @@ namespace MessageManager
                 "servicebus topic name",
                 new Argument<string>()
             );
+            var queueNameOpt = new Option(
+                "--queue-name",
+                "servicebus queue name",
+                new Argument<string>()
+            );
             var subscriptionNameOpt = new Option(
                 "--name",
                 "servicebus subscription name",
@@ -85,33 +90,55 @@ namespace MessageManager
                 new Argument<string>()
             );
 
+            var labelOpt = new Option(
+                "--label",
+                "message label",
+                new Argument<string>()
+            );
+
+            var pathOpt = new Option(
+                "--path",
+                "path to file with message content to send",
+                new Argument<string>()
+            );
+
             var list = new Command("list")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,detailsOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,deadOpt,detailsOpt
             };
 
             var resend = new Command("resend")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt
             };
 
             var kill = new Command("kill")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,idOpt
             };
 
             var delete = new Command("delete")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,deadOpt,idOpt
+            };
+
+            var send = new Command("send")
+            {
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,idOpt,labelOpt,pathOpt
             };
 
             var command = new RootCommand()
             {
-                list, resend, kill, delete
+                list, resend, kill, delete, send
             };
 
             list.Handler = CommandHandler.Create<string, bool, ListerArguments>((resourceGroup, primaryKey, a) =>
             {
+                // if (!System.Diagnostics.Debugger.IsAttached) 
+                //     Console.WriteLine($"Please attach a debugger, PID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
+                // while (!System.Diagnostics.Debugger.IsAttached) 
+                //     System.Threading.Thread.Sleep(100);
+                // System.Diagnostics.Debugger.Break();                 
                 new Lister(new KeyFetcher(resourceGroup, primaryKey), a)
                     .Execute(a.Details).GetAwaiter().GetResult();
             });
@@ -134,8 +161,13 @@ namespace MessageManager
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
 
+            send.Handler = CommandHandler.Create<string, bool, SenderArguments>((resourceGroup, primaryKey, a) =>
+            {               
+                new Sender(new KeyFetcher(resourceGroup, primaryKey), a)
+                    .Execute(a.Path, a.Id, a.Label).GetAwaiter().GetResult();
+            });
 
-            var configuration = CreateConfiguration();
+            var configuration = CreateConfiguration();  
 
             return command.InvokeAsync(AddRequiredListOptions(args)).Result;
         }
@@ -151,10 +183,10 @@ namespace MessageManager
                 result.Add("--namespace-name");
             if (!result.Contains("--keyName"))
                 result.Add("--keyName");   
-            if (!result.Contains("--topic-name"))
-                result.Add("--topic-name");        
-            if (!result.Contains("--name"))
-                result.Add("--name"); 
+            if (!result.Contains("--topic-name") && !result.Contains("--queue-name"))
+                result.Add("--topic-name");  
+            // if (!result.Contains("--name"))
+            //     result.Add("--name"); 
             return result.ToArray();
         }
 

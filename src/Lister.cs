@@ -16,7 +16,7 @@ namespace MessageManager
     public class Lister : SbsCommand
     {
         public Lister(KeyFetcher keyFetcher, ListerArguments a) : 
-            base(keyFetcher, a, EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name + (a.Dead ? "/$DeadLetterQueue" : "")))
+            base(keyFetcher, a, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
         {
         }
 

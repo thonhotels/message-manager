@@ -20,14 +20,14 @@ namespace MessageManager
         private string GetKey(string namespaceName, string keyName, string name, BusType type) =>
             $"{namespaceName}-{keyName}-{name}-{type.ToString()}";
 
-        public string Getkey(string namespaceName, string keyName, string name, BusType type)
+        public string Getkey(string namespaceName, string keyName, string topicName, BusType type)
         {
-            var key = GetKey(namespaceName, keyName, name, type);
+            var key = GetKey(namespaceName, keyName, topicName, type);
             if (Cache.ContainsKey(key))
                 return Cache[key];
             var process = new Process();
             process.StartInfo.FileName = "az";
-            process.StartInfo.Arguments = BuildArguments(namespaceName, keyName, name, type);
+            process.StartInfo.Arguments = BuildArguments(namespaceName, keyName, topicName, type);
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.RedirectStandardOutput = true;
