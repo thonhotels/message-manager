@@ -91,9 +91,14 @@ namespace MessageManager
                 resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,idOpt
             };
 
+            var delete = new Command("delete")
+            {
+                resourceGroupOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,subscriptionNameOpt,deadOpt,idOpt
+            };
+
             var command = new RootCommand()
             {
-                list, resend, kill
+                list, resend, kill, delete
             };
 
             list.Handler = CommandHandler.Create<string, bool, ReceiverArguments>((resourceGroup, primaryKey, a) =>
@@ -113,6 +118,13 @@ namespace MessageManager
                 new Killer(new KeyFetcher(resourceGroup, primaryKey), a)
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
+
+            delete.Handler = CommandHandler.Create<string, bool, DeleterArguments>((resourceGroup, primaryKey, a) =>
+            {               
+                new Deleter(new KeyFetcher(resourceGroup, primaryKey), a)
+                    .Execute(a.Id).GetAwaiter().GetResult();
+            });
+
 
             var configuration = CreateConfiguration();
 
