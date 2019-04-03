@@ -32,7 +32,7 @@ namespace MessageManager
                 return Cache[key];
             var process = new Process();
             process.StartInfo.FileName = IsWindows() ? GetWindowsPath() : "az";
-            process.StartInfo.Arguments = IsWindows() ? "-IBm azure.cli " : "" + BuildArguments(namespaceName, keyName, topicName, type);
+            process.StartInfo.Arguments = (IsWindows() ? "-IBm azure.cli " : "") + BuildArguments(namespaceName, keyName, topicName, type);
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.RedirectStandardOutput = true;
