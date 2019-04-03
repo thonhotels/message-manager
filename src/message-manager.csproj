@@ -7,7 +7,7 @@
     <Description>Tool for managing azure servicebus messages</Description>
     <Authors>Novanet</Authors>
     <Copyright>Copyright ©  2019</Copyright>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>sbmgr</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
