@@ -15,8 +15,8 @@ namespace MessageManager
     }
     public class Lister : SbsCommand
     {
-        public Lister(KeyFetcher keyFetcher, ListerArguments a) : 
-            base(keyFetcher, a, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
+        public Lister(string connectionString, ListerArguments a) : 
+            base(connectionString, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
         {
         }
 

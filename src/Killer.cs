@@ -15,8 +15,8 @@ namespace MessageManager
     public class Killer : SbsCommand
     {
 
-        public Killer(KeyFetcher keyFetcher, KillerArguments a) :
-            base(keyFetcher, a, GetEntityPath(a.Type, a.TopicQueueName, a.Name))
+        public Killer(string connectionString, KillerArguments a) :
+            base(connectionString, GetEntityPath(a.Type, a.TopicQueueName, a.Name))
         {
         }
 

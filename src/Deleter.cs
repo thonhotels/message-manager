@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using MessageManager.Key;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 
@@ -13,8 +14,8 @@ namespace MessageManager
 
     public class Deleter : SbsCommand
     {
-        public Deleter(KeyFetcher keyFetcher, DeleterArguments a) : 
-            base(keyFetcher, a, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
+        public Deleter(string connectionString, DeleterArguments a) : 
+            base(connectionString, GetEntityPath(a.Type, a.TopicQueueName, a.Name, a.Dead))
         {
         }      
 

@@ -16,12 +16,9 @@ namespace MessageManager
     {
         private ISenderClient Sender { get; }
 
-        public Resender(KeyFetcher keyFetcher, ResenderArguments a) : 
-            base(keyFetcher, a, EntityNameHelper.FormatDeadLetterPath(a.Type == BusType.Queue ? a.TopicQueueName : EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name)))
-        {
-            var k = string.IsNullOrEmpty(a.Key) ? keyFetcher.Getkey(a.NamespaceName, a.KeyName, a.TopicQueueName, a.Type).Replace("\"", "") : a.Key;
-            var connectionString = $"Endpoint=sb://{a.NamespaceName}.servicebus.windows.net/;SharedAccessKeyName={a.KeyName};SharedAccessKey={k}";
-            
+        public Resender(string connectionString, ResenderArguments a) : 
+            base(connectionString, EntityNameHelper.FormatDeadLetterPath(a.Type == BusType.Queue ? a.TopicQueueName : EntityNameHelper.FormatSubscriptionPath(a.TopicQueueName, a.Name)))
+        {            
             Sender = a.Type == BusType.Queue ?
                 (ISenderClient)new QueueClient(connectionString, a.TopicQueueName) :
                 new TopicClient(connectionString, a.TopicQueueName); 

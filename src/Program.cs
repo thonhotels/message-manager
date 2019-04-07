@@ -139,32 +139,47 @@ namespace MessageManager
                 //     Console.WriteLine($"Please attach a debugger, PID: {System.Diagnostics.Process.GetCurrentProcess().Id}");
                 // while (!System.Diagnostics.Debugger.IsAttached) 
                 //     System.Threading.Thread.Sleep(100);
-                // System.Diagnostics.Debugger.Break();                 
-                new Lister(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
+                // System.Diagnostics.Debugger.Break();  
+                var connectionString = 
+                    Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
+                        .GetAwaiter().GetResult();
+                new Lister(connectionString, a)
                     .Execute(a.Details).GetAwaiter().GetResult();
             });
 
             resend.Handler = CommandHandler.Create<string, bool, ResenderArguments>((resourceGroup, primaryKey, a) =>
-            {           
-                new Resender(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
+            {  
+                var connectionString = 
+                    Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
+                        .GetAwaiter().GetResult();                         
+                new Resender(connectionString, a)
                     .Execute().GetAwaiter().GetResult();
             });
 
             kill.Handler = CommandHandler.Create<string, bool, KillerArguments>((resourceGroup, primaryKey, a) =>
             {               
-                new Killer(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
+                var connectionString = 
+                    Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
+                        .GetAwaiter().GetResult();
+                new Killer(connectionString, a)
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
 
             delete.Handler = CommandHandler.Create<string, bool, DeleterArguments>((resourceGroup, primaryKey, a) =>
-            {               
-                new Deleter(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
+            {      
+                var connectionString = 
+                    Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
+                        .GetAwaiter().GetResult();                         
+                new Deleter(connectionString, a)
                     .Execute(a.Id).GetAwaiter().GetResult();
             });
 
             send.Handler = CommandHandler.Create<string, bool, SenderArguments>((resourceGroup, primaryKey, a) =>
             {               
-                new Sender(new KeyFetcher(resourceGroup, primaryKey, configuration["PYTHON_PATH"]), a)
+                var connectionString = 
+                    Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
+                        .GetAwaiter().GetResult();
+                new Sender(connectionString, a)
                     .Execute(a.Path, a.Id, a.Label).GetAwaiter().GetResult();
             });
 
