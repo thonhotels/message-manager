@@ -44,7 +44,6 @@ namespace MessageManager
                 if (message == null)                
                 {                    
                     Console.WriteLine($"Message with id {id} was not found");
-                    lockTokens.Add(message.SystemProperties.LockToken);
                     break;
                 }
 
