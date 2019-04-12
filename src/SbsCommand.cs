@@ -14,7 +14,8 @@ namespace MessageManager
         public string TopicQueueName { get; set; }
         public string TopicName { get => TopicQueueName; set { TopicQueueName = value; } }
         public string QueueName { get => TopicQueueName; set { TopicQueueName = value; } }
-        public string Name { get; set; }        
+        public string Name { get; set; } 
+        public bool Force { get; set; }       
     }
 
     public abstract class SbsCommand

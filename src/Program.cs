@@ -77,6 +77,11 @@ namespace MessageManager
                 "use deadletter queue",
                 new Argument<bool>(defaultValue:false)
             );
+            var forceOpt = new Option(
+                "--force",
+                "force delete all",
+                new Argument<bool>(defaultValue:false)
+            );
             var detailsOpt = new Option(
                 "--details",
                 "display details",
@@ -113,12 +118,12 @@ namespace MessageManager
 
             var kill = new Command("kill")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,idOpt,forceOpt
             };
 
             var delete = new Command("delete")
             {
-                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,deadOpt,idOpt
+                resourceGroupOpt,typeOpt,primaryOpt,namespaceOpt,keyNameOpt,keyOpt,topicNameOpt,queueNameOpt,subscriptionNameOpt,deadOpt,idOpt,forceOpt
             };
 
             var send = new Command("send")
@@ -171,7 +176,7 @@ namespace MessageManager
                     Key.ConnectionStringHelper.Get(new Key.KeyFetcher(resourceGroup, primaryKey), a)
                         .GetAwaiter().GetResult();                         
                 new Deleter(connectionString, a)
-                    .Execute(a.Id).GetAwaiter().GetResult();
+                    .Execute(a.Id, a.Force).GetAwaiter().GetResult();
             });
 
             send.Handler = CommandHandler.Create<string, bool, SenderArguments>((resourceGroup, primaryKey, a) =>

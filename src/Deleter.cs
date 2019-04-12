@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MessageManager.Key;
 using Microsoft.Azure.ServiceBus;
@@ -19,8 +21,21 @@ namespace MessageManager
         {
         }      
 
-        public async Task Execute(string id)
+        public async Task Execute(string id, bool force)
         {
+            if (string.IsNullOrEmpty(id) && !force)
+            {
+                Console.WriteLine($"No id specified. Use --force if you intend to delete all messages");
+            }
+            var tokens = await ReceiveMessages(id);
+            var tasks = tokens
+                            .Select(t => Receiver.AbandonAsync(t));
+            await Task.WhenAll(tasks);    
+        }    
+
+        private async Task<IEnumerable<string>> ReceiveMessages(string id)
+        {
+            var lockTokens = new List<string>();
             Message message;
             do
             {
@@ -29,17 +44,18 @@ namespace MessageManager
                 if (message == null)                
                 {                    
                     Console.WriteLine($"Message with id {id} was not found");
-                    return;
+                    lockTokens.Add(message.SystemProperties.LockToken);
+                    break;
                 }
 
-                if (message.MessageId == id)
+                if (string.IsNullOrEmpty(id) || message.MessageId == id)
                 {
                     await Receiver.CompleteAsync(message.SystemProperties.LockToken);
-                    Console.WriteLine($"Message with id {id} was removed");
-                    return;
+                    Console.WriteLine($"Message with id {message.MessageId} was removed");
                 }
-                await Receiver.AbandonAsync(message.SystemProperties.LockToken);
+                lockTokens.Add(message.SystemProperties.LockToken);
             } while (message != null);
-        }          
+            return lockTokens;
+        }      
     }
 }
