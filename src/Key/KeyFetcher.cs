@@ -79,7 +79,7 @@ namespace MessageManager.Key
                 Arguments = args
             };
 
-            startInfo.Environment["PATH"] = $"{Environment.GetEnvironmentVariable("AzureCLIPath")};{AzureCliDefaultPath}";
+            startInfo.Environment["PATH"] = $"{Environment.GetEnvironmentVariable("AzureCLIPath")}:{AzureCliDefaultPath}";
             return startInfo;
         }
 
